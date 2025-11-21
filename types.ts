@@ -1,6 +1,7 @@
 export enum Section {
   HERO = 'hero',
   ABOUT = 'about',
+  JOURNEY = 'journey',
   STACK = 'stack',
   PROJECTS = 'projects',
   CHAT = 'chat',
@@ -27,4 +28,11 @@ export interface Skill {
   name: string;
   category: 'core' | 'framework' | 'tools';
   level: number; // 0-100
+}
+
+export interface TimelineItem {
+  year: string;
+  title: string;
+  description: string;
+  icon: 'code' | 'cpu' | 'trophy' | 'zap';
 }

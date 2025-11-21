@@ -3,15 +3,18 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Projects from './components/Projects';
 import Skills from './components/Skills';
+import Timeline from './components/Timeline';
 import ChatInterface from './components/ChatInterface';
 import NeuralBackground from './components/NeuralBackground';
 import CustomCursor from './components/CustomCursor';
+import RecruiterView from './components/RecruiterView';
 import { Section } from './types';
 import { Mail, Linkedin, Github, Twitter } from 'lucide-react';
 import { MANIT_PROFILE } from './constants';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<Section>(Section.HERO);
+  const [isRecruiterMode, setIsRecruiterMode] = useState(false);
 
   const scrollToSection = (section: Section) => {
     const element = document.getElementById(section);
@@ -20,8 +23,15 @@ export default function App() {
     }
   };
 
+  const toggleViewMode = () => {
+      setIsRecruiterMode(!isRecruiterMode);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   // Spy on scroll to update active navigation
   useEffect(() => {
+    if (isRecruiterMode) return;
+
     const handleScroll = () => {
       const sections = Object.values(Section);
       for (const section of sections) {
@@ -37,7 +47,24 @@ export default function App() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isRecruiterMode]);
+
+  // Recruiter Mode is a completely different layout (pure React component swap)
+  if (isRecruiterMode) {
+      return (
+        <>
+            <Navbar 
+                activeSection={Section.HERO} 
+                scrollToSection={() => {}} 
+                isRecruiterMode={true}
+                toggleViewMode={toggleViewMode}
+            />
+            <div className="pt-20">
+                <RecruiterView />
+            </div>
+        </>
+      );
+  }
 
   return (
     <div className="bg-black min-h-screen text-white selection:bg-neon-purple selection:text-white relative">
@@ -45,7 +72,12 @@ export default function App() {
       <CustomCursor />
       
       <div className="relative z-10">
-        <Navbar activeSection={activeSection} scrollToSection={scrollToSection} />
+        <Navbar 
+            activeSection={activeSection} 
+            scrollToSection={scrollToSection} 
+            isRecruiterMode={false}
+            toggleViewMode={toggleViewMode}
+        />
         
         <main>
           <Hero scrollToSection={scrollToSection} />
@@ -58,6 +90,8 @@ export default function App() {
               </p>
             </div>
           </section>
+
+          <Timeline id={Section.JOURNEY} />
 
           <Skills id={Section.STACK} />
           

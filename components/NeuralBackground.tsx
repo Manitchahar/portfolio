@@ -4,6 +4,10 @@ const NeuralBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -12,9 +16,11 @@ const NeuralBackground: React.FC = () => {
 
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
+    let animationFrameId: number;
 
     const particles: Particle[] = [];
-    const particleCount = Math.min(100, (w * h) / 10000); // Responsive count
+    // Optimized particle count: Lower density on all devices, capping at 60 max
+    const particleCount = Math.min(60, Math.floor((w * h) / 25000)); 
     const connectionDistance = 150;
     const mouseDistance = 200;
 
@@ -30,8 +36,8 @@ const NeuralBackground: React.FC = () => {
       constructor() {
         this.x = Math.random() * w;
         this.y = Math.random() * h;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
+        this.vx = (Math.random() - 0.5) * 0.3; // Slower speed for less chaos
+        this.vy = (Math.random() - 0.5) * 0.3;
         this.size = Math.random() * 2 + 1;
       }
 
@@ -43,7 +49,7 @@ const NeuralBackground: React.FC = () => {
         if (this.x < 0 || this.x > w) this.vx *= -1;
         if (this.y < 0 || this.y > h) this.vy *= -1;
 
-        // Mouse interaction (repulsion/attraction mix)
+        // Mouse interaction
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -53,9 +59,8 @@ const NeuralBackground: React.FC = () => {
             const forceDirectionY = dy / distance;
             const force = (mouseDistance - distance) / mouseDistance;
             
-            // Gentle repulsion
             const direction = -1; 
-            const maxForce = 0.5; // Cap the force
+            const maxForce = 0.2; // Reduced interaction force
             
             this.vx += forceDirectionX * force * direction * maxForce;
             this.vy += forceDirectionY * force * direction * maxForce;
@@ -66,7 +71,7 @@ const NeuralBackground: React.FC = () => {
         if (!ctx) return;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(176, 38, 255, 0.5)'; // Neon Purple
+        ctx.fillStyle = 'rgba(176, 38, 255, 0.3)'; 
         ctx.fill();
       }
     }
@@ -94,7 +99,7 @@ const NeuralBackground: React.FC = () => {
 
           if (distance < connectionDistance) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(0, 212, 255, ${1 - distance / connectionDistance})`; // Fade out Neon Blue
+            ctx.strokeStyle = `rgba(0, 212, 255, ${0.15 * (1 - distance / connectionDistance)})`; // Lower opacity
             ctx.lineWidth = 0.5;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
@@ -108,7 +113,7 @@ const NeuralBackground: React.FC = () => {
         const distMouse = Math.sqrt(dx * dx + dy * dy);
         if (distMouse < mouseDistance) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(176, 38, 255, ${1 - distMouse / mouseDistance})`; // Connect to cursor
+            ctx.strokeStyle = `rgba(176, 38, 255, ${0.2 * (1 - distMouse / mouseDistance)})`;
             ctx.lineWidth = 0.5;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(mouse.x, mouse.y);
@@ -116,7 +121,7 @@ const NeuralBackground: React.FC = () => {
         }
       });
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     init();
@@ -139,6 +144,7 @@ const NeuralBackground: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 

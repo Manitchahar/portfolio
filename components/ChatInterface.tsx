@@ -7,7 +7,7 @@ interface ChatInterfaceProps {
   id: string;
 }
 
-// Internal Typewriter Component for the "Godlike" effect
+// Internal Typewriter Component
 const Typewriter = ({ text, onUpdate, onComplete }: { text: string; onUpdate?: () => void; onComplete?: () => void }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -27,12 +27,11 @@ const Typewriter = ({ text, onUpdate, onComplete }: { text: string; onUpdate?: (
         setIsComplete(true);
         if (onComplete) onComplete();
       }
-    }, 20); // Fast, tech-y typing speed
+    }, 20); 
 
     return () => clearInterval(interval);
   }, [text, onUpdate, onComplete]);
 
-  // Split by newlines to preserve paragraph formatting
   const lines = displayedText.split('\n');
 
   return (
@@ -40,7 +39,6 @@ const Typewriter = ({ text, onUpdate, onComplete }: { text: string; onUpdate?: (
       {lines.map((line, i) => (
         <p key={i} className="mb-2 last:mb-0 min-h-[1em] break-words">
           {line}
-          {/* Show cursor only on the last line while typing */}
           {!isComplete && i === lines.length - 1 && (
              <span className="inline-block w-2 h-4 ml-1 bg-neon-blue animate-pulse align-middle shadow-[0_0_8px_#00d4ff]" />
           )}
@@ -61,27 +59,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ id }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use container ref to control internal scrolling without hijacking window scroll
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isUserAtBottomRef = useRef(true); // Track if user is reading history or at bottom
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+  // Check scroll position to determine if we should auto-scroll
+  const handleScroll = () => {
     if (chatContainerRef.current) {
-      const { scrollHeight, clientHeight } = chatContainerRef.current;
-      // Only scroll if content overflows the container
-      if (scrollHeight > clientHeight) {
-        chatContainerRef.current.scrollTo({
-          top: scrollHeight,
-          behavior: behavior
-        });
-      }
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      // Allow a small buffer (50px)
+      isUserAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 50;
     }
   };
 
-  // Scroll on new messages (initial render of message bubble)
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (chatContainerRef.current && isUserAtBottomRef.current) {
+      const { scrollHeight } = chatContainerRef.current;
+      chatContainerRef.current.scrollTo({
+        top: scrollHeight,
+        behavior: behavior
+      });
+    }
+  };
+
+  // Initial scroll on mount
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+     if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+     }
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -95,8 +101,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ id }) => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
+    
+    // Force scroll to bottom on user send
+    isUserAtBottomRef.current = true;
+    setTimeout(() => scrollToBottom(), 10);
 
-    // Prepare history for the API
     const historyForApi = messages.map(m => ({
         role: m.role,
         parts: [{ text: m.content }]
@@ -114,7 +123,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ id }) => {
     setMessages(prev => [...prev, modelMsg]);
     setIsLoading(false);
     
-    // Re-focus input
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -149,7 +157,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ id }) => {
           {/* Messages Area */}
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar font-mono text-sm"
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar font-mono text-sm scroll-smooth"
           >
             {messages.map((msg, idx) => {
               const isLastMessage = idx === messages.length - 1;

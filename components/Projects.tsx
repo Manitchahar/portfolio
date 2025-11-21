@@ -1,12 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { PROJECTS } from '../constants';
 import { Github, ExternalLink } from 'lucide-react';
+import { Project } from '../types';
 
 interface ProjectsProps {
   id: string;
 }
 
-const ProjectCard = ({ project }: { project: any }) => {
+const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
   const divRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -53,7 +54,7 @@ const ProjectCard = ({ project }: { project: any }) => {
         
         {/* Tech Stack Tags Floating */}
         <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-          {project.tech.map((t: string) => (
+          {project.tech.map((t) => (
             <span key={t} className="text-xs font-mono bg-neon-purple/20 backdrop-blur-md border border-neon-purple/30 text-neon-blue px-2 py-1 rounded shadow-[0_0_10px_rgba(176,38,255,0.3)]">
               {t}
             </span>
