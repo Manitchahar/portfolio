@@ -24,6 +24,17 @@
       .ease-emphasized {
         transition-timing-function: cubic-bezier(0.2, 0.0, 0.0, 1.0);
       }
+      
+      /* Energy Beam Animation */
+      @keyframes beam-flow {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 0% 200%; }
+      }
+      .animate-beam {
+        background-size: 100% 200%;
+        animation: beam-flow 2s linear infinite;
+      }
+
       /* Hide scrollbar for chrome/safari/opera */
       ::-webkit-scrollbar {
         width: 8px;
