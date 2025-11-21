@@ -1,3 +1,4 @@
+
 import { Project, TimelineEvent } from './types';
 
 export const HERO_KEYWORDS = [
@@ -50,26 +51,26 @@ export const PROJECTS: Project[] = [
 export const TIMELINE: TimelineEvent[] = [
   {
     year: '2019',
-    title: 'Foundation',
-    description: 'Started Bachelor of Computer Applications (BCA) at GLA University. The journey into logic and code begins.',
+    title: 'Academic Foundation',
+    description: 'BCA at GLA University. Focused on core CS fundamentals, laying the groundwork for complex system architecture.',
     icon: 'genesis'
   },
   {
     year: '2022',
-    title: 'Systems Engineering',
-    description: 'Joined Wipro as Systems Engineer. Managed cloud infrastructure on AWS/Azure for major enterprise clients, achieving 99% uptime. Built initial SageMaker prototypes.',
+    title: 'Cloud Infrastructure & DevOps',
+    description: 'Systems Engineer at Wipro. Managed critical AWS/Azure infrastructure for enterprise clients (BP, N Power) with 99% uptime. Built early AI prototypes using SageMaker.',
     icon: 'code'
   },
   {
     year: '2024',
-    title: 'Generative Evolution',
-    description: 'Advanced to Generative AI Developer. designing Multi-Agent workflows, implementing MCP, and deploying fine-tuned models on Google Vertex AI and Azure AI Foundry.',
+    title: 'Generative AI Evolution',
+    description: 'Pivoted to GenAI Developer. Architecting Multi-Agent workflows, reducing MTTR with Reasoning Models (DeepSeek R1), and deploying standardized MCP agents.',
     icon: 'network'
   },
   {
     year: 'Future',
-    title: 'Reasoning Architect',
-    description: 'Pushing the boundaries with Reasoning Models (DeepSeek R1, o1) and "Vibe Coding" to accelerate rapid prototyping and delivery.',
+    title: 'Autonomous Agency',
+    description: 'Exploring the frontier of Agentic AI and "Vibe Coding"—building systems that self-correct, reason recursively, and deploy autonomously.',
     icon: 'godlike'
   }
 ];

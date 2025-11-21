@@ -1,10 +1,19 @@
 
 import React, { useEffect, useRef } from 'react';
+import { useViewMode } from './ViewModeContext';
 
 const BackgroundCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { isRecruiterMode } = useViewMode();
 
   useEffect(() => {
+    // In Recruiter Mode, we don't run the canvas loop at all
+    if (isRecruiterMode) return;
+
+    // Accessibility Check
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -16,8 +25,8 @@ const BackgroundCanvas: React.FC = () => {
     
     const mouse = { x: -1000, y: -1000 };
 
-    // Configuration
-    const particleCount = Math.min(80, (w * h) / 18000); 
+    // Performance: Limit particle count based on screen size
+    const particleCount = Math.min(60, Math.floor((w * h) / 25000)); 
     const connectionDistance = 180;
     const mouseDistance = 300;
 
@@ -31,8 +40,8 @@ const BackgroundCanvas: React.FC = () => {
       constructor() {
         this.x = Math.random() * w;
         this.y = Math.random() * h;
-        this.vx = (Math.random() - 0.5) * 0.3;
-        this.vy = (Math.random() - 0.5) * 0.3;
+        this.vx = (Math.random() - 0.5) * 0.2; 
+        this.vy = (Math.random() - 0.5) * 0.2;
         this.size = Math.random() * 2 + 1;
       }
 
@@ -40,11 +49,9 @@ const BackgroundCanvas: React.FC = () => {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Bounce off edges
         if (this.x < 0 || this.x > w) this.vx *= -1;
         if (this.y < 0 || this.y > h) this.vy *= -1;
 
-        // Mouse repulsion (Gentle push)
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -68,7 +75,6 @@ const BackgroundCanvas: React.FC = () => {
       }
     }
 
-    // Pulse representing data flow
     class Pulse {
       p1: Particle;
       p2: Particle;
@@ -95,12 +101,8 @@ const BackgroundCanvas: React.FC = () => {
         
         ctx!.beginPath();
         ctx!.arc(curX, curY, 2, 0, Math.PI * 2);
-        // Cyan pulse color for contrast against lime network
         ctx!.fillStyle = `rgba(34, 211, 238, ${1 - this.progress})`; 
-        ctx!.shadowBlur = 10;
-        ctx!.shadowColor = "rgba(34, 211, 238, 1)";
         ctx!.fill();
-        ctx!.shadowBlur = 0;
       }
     }
 
@@ -110,25 +112,26 @@ const BackgroundCanvas: React.FC = () => {
     }
 
     let pulses: Pulse[] = [];
+    let animationFrameId: number;
 
     const animate = () => {
       ctx.clearRect(0, 0, w, h);
       
-      // Update & Draw Particles
       particles.forEach(p => {
         p.update();
         p.draw();
       });
 
-      // Draw Connections & Spawn Pulses
       ctx.lineWidth = 0.5;
+      
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < connectionDistance) {
+          const distSq = dx * dx + dy * dy;
+          
+          if (distSq < connectionDistance * connectionDistance) {
+            const distance = Math.sqrt(distSq);
             const opacity = 1 - (distance / connectionDistance);
             ctx.strokeStyle = `rgba(163, 230, 53, ${opacity * 0.15})`;
             ctx.beginPath();
@@ -136,7 +139,6 @@ const BackgroundCanvas: React.FC = () => {
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
 
-            // Randomly spawn a pulse
             if (Math.random() < 0.0005) {
               pulses.push(new Pulse(particles[i], particles[j]));
             }
@@ -144,7 +146,6 @@ const BackgroundCanvas: React.FC = () => {
         }
       }
 
-      // Update & Draw Pulses
       for (let i = pulses.length - 1; i >= 0; i--) {
         pulses[i].update();
         if (!pulses[i].active) {
@@ -154,7 +155,7 @@ const BackgroundCanvas: React.FC = () => {
         }
       }
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
@@ -175,13 +176,20 @@ const BackgroundCanvas: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isRecruiterMode]);
+
+  // Recruiter Mode: Static clean background
+  if (isRecruiterMode) {
+    return <div className="fixed top-0 left-0 w-full h-full -z-10 bg-[#0f0f11]" />;
+  }
 
   return (
     <canvas 
       ref={canvasRef} 
       className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none bg-[#0f0f11]"
+      style={{ opacity: 0.8 }} 
     />
   );
 };
